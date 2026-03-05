@@ -1,16 +1,16 @@
 # IA-Rag
 Trello: https://trello.com/b/lsueWCN0/ia-facens-2026
 
-César Augusto de Almeida - RA 222909
-Darlan Henrique de Souza Oliveira - RA 211926
-Grazielly Almeida Rolle - RA 211871
-Gustavo Eiji Tamezava - RA 222226
-Kevyn Feitosa Rocha - RA 223535
-Leonardo Almeida Proença - RA 222241
-Lucas Nascimento de Campos - RA 223324
-Natale Tagliaferro Neto - RA 212182
-Thiago Jun Honma RA - 222628
-Vinicius Matheus Nunes Araújo - RA 211973
+- César Augusto de Almeida - RA 222909
+- Darlan Henrique de Souza Oliveira - RA 211926
+- Grazielly Almeida Rolle - RA 211871
+- Gustavo Eiji Tamezava - RA 222226
+- Kevyn Feitosa Rocha - RA 223535
+- Leonardo Almeida Proença - RA 222241
+- Lucas Nascimento de Campos - RA 223324
+- Natale Tagliaferro Neto - RA 212182
+- Thiago Jun Honma RA - 222628
+- Vinicius Matheus Nunes Araújo - RA 211973
 
 # Product Backlog
 

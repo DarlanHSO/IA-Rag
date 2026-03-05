@@ -96,12 +96,3 @@ Cada item do backlog possui:
 | PB17 | Como desenvolvedor, quero documentar a arquitetura do sistema | Infraestrutura | README técnico completo |
 
 ---
-
-# Observações
-
-- Este backlog representa **uma versão inicial do planejamento do projeto**.
-- Novas tarefas podem ser adicionadas conforme a evolução do sistema.
-- Os itens podem ser organizados em **sprints durante o desenvolvimento**.
-- A estrutura segue a arquitetura definida para o projeto, garantindo cobertura de **todas as camadas do sistema**.
-
----

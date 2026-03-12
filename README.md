@@ -1,5 +1,5 @@
 # IA-Rag
-Trello: https://trello.com/b/lsueWCN0/ia-facens-2026
+Jira: https://vinicius44.atlassian.net/jira/projects?page=1&sortKey=name&sortOrder=ASC&types=software%2Cbusiness
 
 - César Augusto de Almeida - RA 222909 - Dev / CP901TIN2
 - Darlan Henrique de Souza Oliveira - RA 211926 - Scrum / CP901TIN2

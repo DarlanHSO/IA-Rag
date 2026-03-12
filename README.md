@@ -1,17 +1,17 @@
 # IA-Rag
 Trello: https://trello.com/b/lsueWCN0/ia-facens-2026
 
-- César Augusto de Almeida - RA 222909 - Dev
-- Darlan Henrique de Souza Oliveira - RA 211926 - Scrum
-- Grazielly Almeida Rolle - RA 211871 - Dev
-- Gustavo Eiji Tamezava - RA 222226 - Scrum
-- Kevyn Feitosa Rocha - RA 223535 - Dev
-- Leonardo Almeida Proença - RA 222241 - Dev
-- Lucas Nascimento de Campos - RA 223324 - Tester
-- Natale Tagliaferro Neto - RA 212182 - Dev
-- Thiago Jun Honma RA - 222628 - Tester
-- Vinicius Matheus Nunes Araújo - RA 211973 - PO
-- Felipe Roberto de Souza Silva - RA 226752 - Dev
+- César Augusto de Almeida - RA 222909 - Dev / CP901TIN2
+- Darlan Henrique de Souza Oliveira - RA 211926 - Scrum / CP901TIN2
+- Grazielly Almeida Rolle - RA 211871 - Dev / CP901TIN2
+- Gustavo Eiji Tamezava - RA 222226 - Scrum / CP901TIN2
+- Kevyn Feitosa Rocha - RA 223535 - Dev / CP901TIN2
+- Leonardo Almeida Proença - RA 222241 - Dev / CP901TIN2
+- Lucas Nascimento de Campos - RA 223324 - Tester / CP901TIN2
+- Natale Tagliaferro Neto - RA 212182 - Dev / CP901TIN2
+- Thiago Jun Honma RA - 222628 - Tester / CP901TIN2
+- Vinicius Matheus Nunes Araújo - RA 211973 - PO / CP901TIN2
+- Felipe Roberto de Souza Silva - RA 226752 - Dev / CP901TIN3
 
 # Product Backlog
 

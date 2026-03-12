@@ -11,6 +11,7 @@ Trello: https://trello.com/b/lsueWCN0/ia-facens-2026
 - Natale Tagliaferro Neto - RA 212182 - Dev
 - Thiago Jun Honma RA - 222628 - Tester
 - Vinicius Matheus Nunes Araújo - RA 211973 - PO
+- Felipe Roberto de Souza Silva - RA 226752 - Dev
 
 # Product Backlog
 

@@ -1,6 +1,8 @@
 # IA-Rag
 Jira: https://vinicius44.atlassian.net/jira/projects?page=1&sortKey=name&sortOrder=ASC&types=software%2Cbusiness
 
+Link Dataset: https://www.kaggle.com/datasets/bsthere/youtube-trending-videos-stats-2026
+
 - César Augusto de Almeida - RA 222909 - Dev / CP901TIN2
 - Darlan Henrique de Souza Oliveira - RA 211926 - Scrum / CP901TIN2
 - Grazielly Almeida Rolle - RA 211871 - Dev / CP901TIN2

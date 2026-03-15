@@ -1,5 +1,5 @@
 # IA-Rag
-Jira: https://vinicius44.atlassian.net/jira/projects?page=1&sortKey=name&sortOrder=ASC&types=software%2Cbusiness
+Jira: 
 
 Link Dataset: https://www.kaggle.com/datasets/bsthere/youtube-trending-videos-stats-2026
 

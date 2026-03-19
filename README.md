@@ -40,12 +40,12 @@ Cada item do backlog possui:
 
 # Epic 1 — Preparação e Organização de Dados
 
-**Objetivo:** estruturar e preparar o dataset de imagens para utilização no sistema de IA.
+**Objetivo:** estruturar e preparar o dataset de dados para utilização no sistema de IA.
 
 | ID | User Story | Camada | Critério de Aceite |
 |----|-----------|--------|--------------------|
-| PB01 | Como desenvolvedor, quero armazenar o dataset bruto de imagens no Data Lake para centralizar os dados do projeto | Dados (MinIO - Bronze) | Dataset armazenado no bucket bronze |
-| PB02 | Como desenvolvedor, quero organizar e limpar os metadados das imagens para melhorar a qualidade dos dados | Dados (Silver) | Metadados estruturados e inconsistências removidas |
+| PB01 | Como desenvolvedor, quero armazenar o dataset bruto de dados no Data Lake para centralizar os dados do projeto | Dados (MinIO - Bronze) | Dataset armazenado no bucket bronze |
+| PB02 | Como desenvolvedor, quero organizar e limpar os metadados das trends para melhorar a qualidade dos dados | Dados (Silver) | Metadados estruturados e inconsistências removidas |
 | PB03 | Como desenvolvedor, quero gerar uma versão tratada do dataset pronta para consumo pela IA | Dados (Gold) | Dataset padronizado e validado |
 | PB04 | Como desenvolvedor, quero registrar metadados e versões do dataset no banco para auditoria | Dados (PostgreSQL) | Dataset registrado com versão |
 
@@ -55,24 +55,25 @@ Cada item do backlog possui:
 
 **Objetivo:** preparar e processar os dados utilizando técnicas de IA e pipeline RAG.
 
-| ID | User Story | Camada | Critério de Aceite |
-|----|-----------|--------|--------------------|
-| PB05 | Como desenvolvedor, quero dividir os dados em partes menores para melhorar o processamento | IA (Chunking) | Pipeline gera chunks corretamente |
-| PB06 | Como desenvolvedor, quero gerar embeddings das imagens para permitir busca semântica | IA (Embedding) | Embeddings gerados com sucesso |
-| PB07 | Como desenvolvedor, quero armazenar embeddings no banco vetorial para consultas eficientes | Dados (Milvus) | Vetores indexados no banco |
-| PB08 | Como usuário, quero que o sistema recupere imagens similares a partir de uma consulta | IA (Recuperação) | Sistema retorna resultados relevantes |
+| ID   | User Story                                                                 | Camada              | Critério de Aceite                                      |
+|------|---------------------------------------------------------------------------|---------------------|---------------------------------------------------------|
+| PB05 | Como desenvolvedor, quero dividir os dados tabulares em partes menores para melhorar o processamento | IA (Chunking)       | Pipeline gera chunks de registros corretamente           |
+| PB06 | Como desenvolvedor, quero gerar embeddings a partir dos dados tabulares para permitir busca semântica | IA (Embedding)      | Embeddings gerados com sucesso a partir dos registros    |
+| PB07 | Como desenvolvedor, quero armazenar embeddings no banco vetorial para consultas eficientes | Dados (Milvus)      | Vetores indexados corretamente no banco                 |
+| PB08 | Como usuário, quero que o sistema recupere registros similares a partir de uma consulta | IA (Recuperação)    | Sistema retorna resultados relevantes com base nos dados |
+|
 
 ---
 
 # Epic 3 — API e Aplicação
 
-**Objetivo:** disponibilizar os serviços de análise através de uma API e interface de usuário.
+**Objetivo:** disponibilizar os serviços de análise de dados tabulares (trends do YouTube) através de uma API e interface de usuário.
 
-| ID | User Story | Camada | Critério de Aceite |
-|----|-----------|--------|--------------------|
-| PB09 | Como desenvolvedor, quero criar endpoints para consulta de imagens via API | Aplicação (FastAPI) | Endpoint `/search` funcionando |
-| PB10 | Como usuário, quero consultar imagens através de uma interface simples | Aplicação (Gradio) | Interface funcional disponível |
-| PB11 | Como usuário, quero visualizar os resultados da análise de imagem | Aplicação | Resultados exibidos corretamente |
+| ID   | User Story                                                                 | Camada              | Critério de Aceite                                                  |
+|------|---------------------------------------------------------------------------|---------------------|---------------------------------------------------------------------|
+| PB09 | Como desenvolvedor, quero criar endpoints para consulta de dados via API  | Aplicação (FastAPI) | Endpoint `/search` retorna registros relevantes do dataset          |
+| PB10 | Como usuário, quero consultar dados através de uma interface simples      | Aplicação (Gradio)  | Interface funcional permitindo buscas e filtros                     |
+| PB11 | Como usuário, quero visualizar os resultados da análise dos dados         | Aplicação           | Resultados exibidos corretamente (ex: título, canal, métricas, etc) |
 
 ---
 

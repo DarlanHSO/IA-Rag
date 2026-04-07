@@ -1,0 +1,15 @@
+# Ignorar as chaves e segredos
+.env
+
+data/
+*.csv
+*.parquet
+
+# Json comentado para manter o dicionario no rep, talvez não precise no futuro, mas estou mantendo assim
+#*.json
+
+__pycache__/
+*.pyc
+.venv/
+env/
+

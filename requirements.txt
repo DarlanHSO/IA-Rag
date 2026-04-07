@@ -1,0 +1,6 @@
+pandas
+pyarrow
+minio
+python-dotenv
+google-api-python-client
+kaggle

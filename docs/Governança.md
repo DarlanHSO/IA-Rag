@@ -1,8 +1,8 @@
-# documentação de governança de dados - sprint 3
+# Documentação de Governança de Dados - sprint 3
 
-este documento define as regras de negócio, qualidade e arquitetura aplicadas ao pipeline do projeto ia-rag.
+Este documento define as regras de negócio, qualidade e arquitetura aplicadas ao pipeline do projeto ia-rag.
 
-## 1. arquitetura medallion e linhagem
+## 1. Arquitetura Medallion e linhagem
 
 o fluxo de dados utiliza o minio como data lake, dividido em três restrições de acesso e mutabilidade:
 
@@ -10,7 +10,7 @@ o fluxo de dados utiliza o minio como data lake, dividido em três restrições 
 * **silver (trusted):** camada de qualidade. os dados regionais são consolidados. a transição para o formato parquet ocorre aqui para preservar a tipagem columnar construída no pandas e reduzir drasticamente o custo de i/o nas leituras futuras.
 * **gold (business):** camada de consumo. o dado é formatado exclusivamente para a indexação no banco de vetores do rag.
 
-## 2. regras de qualidade (data quality)
+## 2. Regras de qualidade (data quality)
 
 para um dado ser promovido da camada bronze até a gold, ele passa obrigatoriamente pelos seguintes contratos:
 
@@ -20,12 +20,12 @@ para um dado ser promovido da camada bronze até a gold, ele passa obrigatoriame
 * **tipagem estrita:** datas são convertidas forçosamente para datetime e métricas para inteiros, prevenindo quebras de esquema nas camadas de consumo.
 * **enriquecimento obrigatório:** o id numérico da categoria é mapeado para seu nome em texto usando o dicionário oficial, agregando o valor semântico necessário para a ia entender o assunto.
 
-## 3. regras de negócio para inteligência artificial (gold)
+## 3. Regras de negócio para inteligência artificial (gold)
 
 * **descarte estrutural:** chaves numéricas isoladas, como channel_id, são removidas por não agregarem valor na busca semântica.
 * **densidade de contexto:** os metadados úteis (título, categoria, canal, tags e descrição) são consolidados em uma única string textual (texto_rag) para otimizar a criação de embeddings pelo modelo de linguagem.
 
-## 4. segurança e infraestrutura
+## 4. Segurança e infraestrutura
 
 * **processamento stateless:** todas as operações de i/o de arquivos brutos ocorrem em memória/diretórios temporários, prevenindo o esgotamento do disco local com resíduos de processamento (como zips e csvs descartados).
 * **proteção de credenciais:** o acesso ao kaggle e ao minio não possui hardcode no repositório. as chaves são injetadas exclusivamente via variáveis de ambiente (.env).

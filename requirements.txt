@@ -4,3 +4,5 @@ minio
 python-dotenv
 google-api-python-client
 kaggle
+scikit-learn
+mlflow

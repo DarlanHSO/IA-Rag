@@ -34,7 +34,10 @@ with tempfile.TemporaryDirectory() as temp_dir:
         
         df["country"] = obj.object_name.split("_")[0]
         df["category_name"] = df["category_id"].map(category_map).fillna("não informado")
-            
+
+        if "dislikes" in df.columns:
+            df = df.drop(columns=["dislikes"])
+
         df = df[df["views"] > 0]
         
         df["tags"] = df["tags"].replace("[none]", "não informado").fillna("não informado")

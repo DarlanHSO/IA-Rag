@@ -120,7 +120,6 @@ def prepare_data(df):
     # Aqui estamos escolhendo colunas numéricas e derivadas para usar no modelo
     features = [
     "likes",
-    "dislikes",
     "comments",
     "title_length",
     "num_tags",

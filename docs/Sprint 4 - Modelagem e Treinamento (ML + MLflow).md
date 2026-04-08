@@ -78,7 +78,6 @@ viral = views > 1_000_000
 
 ```text
 likes
-dislikes
 comments
 title_length
 num_tags

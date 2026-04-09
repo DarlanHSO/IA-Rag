@@ -24,8 +24,6 @@ warnings.filterwarnings("ignore")
 
 # Configuração do MLflow
 # Se estiver rodando o MLflow localmente, a URI será essa:
-# http://localhost:3000
-# Caso o seu grupo tenha configurado outra porta, altere aqui.
 mlflow.set_tracking_uri("http://localhost:3000")
 
 mlflow.set_experiment("youtube_trending_classification")
@@ -33,8 +31,8 @@ mlflow.set_experiment("youtube_trending_classification")
 # Conexão com o MinIO
 client = Minio(
     "localhost:9000",
-    access_key="minio",
-    secret_key="minio123",
+    access_key=os.getenv("MINIO_ACCESS_KEY"),
+    secret_key=os.getenv("MINIO_SECRET_KEY"),
     secure=False
 )
 
@@ -45,8 +43,6 @@ def load_gold_data():
     Baixa o arquivo da camada Gold do MinIO, lê com pandas
     e retorna um DataFrame.
 
-    Retorno:
-        df (pd.DataFrame): dados carregados da Gold
     """
 
     print("Baixando dados da camada Gold...")
@@ -78,12 +74,6 @@ def prepare_data(df):
 
     Também cria algumas features novas.
 
-    Parâmetros:
-        df (pd.DataFrame): DataFrame original
-
-    Retorno:
-        X (pd.DataFrame): features
-        y (pd.Series): target
     """
 
     print("Iniciando pré-processamento...")
@@ -103,11 +93,8 @@ def prepare_data(df):
         lambda x: 0 if x.strip().lower() == "[none]" else len(x.split("|"))
     )
 
-    # Tamanho da descrição
     df["description_length"] = df["description"].astype(str).apply(len)
 
-    # Evitar divisão por zero:
-    # se views for 0, substituímos por 1 só para não quebrar a conta
     safe_views = df["views"].replace(0, 1)
 
     # Razão likes / views
@@ -117,7 +104,6 @@ def prepare_data(df):
     df["comments_ratio"] = df["comments"] / safe_views
 
     # Features finais para o modelo
-    # Aqui estamos escolhendo colunas numéricas e derivadas para usar no modelo
     features = [
     "likes",
     "comments",
@@ -146,13 +132,6 @@ def train_and_evaluate_model(model_name, model, X_train, X_test, y_train, y_test
     """
     Treina um modelo, faz previsões, calcula métricas e registra tudo no MLflow.
 
-    Parâmetros:
-        model_name (str): nome do modelo
-        model: instância do modelo
-        X_train, X_test, y_train, y_test: dados de treino e teste
-
-    Retorno:
-        results (dict): métricas calculadas
     """
 
     print(f"\nTreinando modelo: {model_name}")
@@ -172,7 +151,7 @@ def train_and_evaluate_model(model_name, model, X_train, X_test, y_train, y_test
 
         mlflow.log_param("model_name", model_name)
 
-        # Tentando registrar os parâmetros internos do modelo
+        # Tenta registrar os parâmetros internos do modelo
         if hasattr(model, "get_params"):
             params = model.get_params()
             for param_name, param_value in params.items():

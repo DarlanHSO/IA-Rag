@@ -21,8 +21,6 @@ api.authenticate()
 
 DATASET_ID = "bsthere/youtube-trending-videos-stats-2026"
 
-print("baixando dados brutos do kaggle...")
-
 # evita o acúmulo de artefatos residuais (.zip) e previne o esgotamento do armazenamento em disco local
 with tempfile.TemporaryDirectory() as temp_dir:
     api.dataset_download_files(DATASET_ID, path=temp_dir, unzip=True)
@@ -43,7 +41,7 @@ with tempfile.TemporaryDirectory() as temp_dir:
 
 categories_path = BASE_DIR / "data" / "bronze" / "categories_official.json"
 
-# centraliza o dicionário no data lake para atuar como fonte única da verdade (ssot) para as próximas camadas
+# centraliza o dicionário no data lake para atuar como fonte única da verdade para as próximas camadas
 if categories_path.exists():
     client.fput_object("bronze", "categories_official.json", str(categories_path))
     print("salvo na bronze: categories_official.json")

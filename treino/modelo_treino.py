@@ -38,7 +38,7 @@ client = Minio(
 
 
 # Função para carregar os dados da camada Gold do MinIO
-def load_gold_data():
+def carregar_dados_gold():
     """
     Baixa o arquivo da camada Gold do MinIO, lê com pandas
     e retorna um DataFrame.
@@ -62,7 +62,7 @@ def load_gold_data():
 
 
 # Função para preparar os dados para classificação (PRÉ-PROCESSAMENTO)
-def prepare_data(df):
+def preparar_dados(df):
     """
     Preparando os dados para classificação.
 
@@ -75,7 +75,6 @@ def prepare_data(df):
     Também cria algumas features novas.
 
     """
-
     print("Iniciando pré-processamento...")
 
     # Criando a variável target "viral"
@@ -119,7 +118,6 @@ def prepare_data(df):
     print("Features usadas:", available_features)
 
     X = df[available_features].fillna(0)
-
     y = df["viral"]
 
     print("Pré-processamento concluído.")
@@ -127,12 +125,11 @@ def prepare_data(df):
 
 
 # Função para treinar, avaliar e registrar o modelo no MLflow
-def train_and_evaluate_model(model_name, model, X_train, X_test, y_train, y_test):
+def treino_avaliar_modelo(model_name, model, X_train, X_test, y_train, y_test):
     """
     Treina um modelo, faz previsões, calcula métricas e registra tudo no MLflow.
 
     """
-
     print(f"\nTreinando modelo: {model_name}")
 
     # Inicia uma execução (run) no MLflow
@@ -188,8 +185,8 @@ def main():
     Função principal do pipeline de treino.
     """
     print("Iniciando pipeline de treinamento...")
-    df = load_gold_data()
-    X, y = prepare_data(df)
+    df = carregar_dados_gold()
+    X, y = preparar_dados(df)
     
     # Divindindo em treino e teste (80% treino, 20% teste)
     X_train, X_test, y_train, y_test = train_test_split(
@@ -217,7 +214,7 @@ def main():
     all_results = []
 
     for model_name, model in models.items():
-        result = train_and_evaluate_model(
+        result = treino_avaliar_modelo(
             model_name=model_name,
             model=model,
             X_train=X_train,

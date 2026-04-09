@@ -120,7 +120,6 @@ def prepare_data(df):
 
     X = df[available_features].fillna(0)
 
-    X = df[features].fillna(0)
     y = df["viral"]
 
     print("Pré-processamento concluído.")

@@ -2,6 +2,9 @@ import os
 import tempfile
 import warnings
 
+from dotenv import load_dotenv
+load_dotenv()
+
 import pandas as pd
 from minio import Minio
 

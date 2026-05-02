@@ -1,69 +1,101 @@
+from pathlib import Path
+import pandas as pd
 import ollama
 
 from pymilvus import (
     connections,
-    FieldSchema,
-    CollectionSchema,
-    DataType,
     Collection,
+    CollectionSchema,
+    FieldSchema,
+    DataType,
     utility
 )
 
-# ==========================================
-# Modelo de embedding do Ollama
-# ==========================================
+# =========================================================
+# PATHS
+# =========================================================
 
-OLLAMA_EMBED_MODEL = "nomic-embed-text"
+# Pasta do script atual
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ==========================================
-# Textos
-# ==========================================
+# Dataset parquet
+DATASET_PATH = BASE_DIR / "data" / "gold" / "trending_gold.parquet"
 
-sentences = [
-    "The weather is lovely today.",
-    "It's so sunny outside!",
-    "He drove to the stadium.",
-]
+print(f"Dataset path: {DATASET_PATH}")
 
-# ==========================================
-# Gerar embeddings usando Ollama
-# ==========================================
+# =========================================================
+# Ler dataset parquet
+# =========================================================
 
+LIMIT = 500;
+
+
+df = pd.read_parquet(DATASET_PATH)
+df = df.head(LIMIT)
+
+print("Dataset carregado!")
+print(f"Quantidade de linhas: {len(df)}")
+
+# =========================================================
+# Conectar no Milvus
+# =========================================================
+
+connections.connect(
+    alias="default",
+    host="localhost",
+    port="19530"
+)
+
+# =========================================================
+# Collection
+# =========================================================
+
+COLLECTION_NAME = "youtube_trending"
+
+# =========================================================
+# Modelo embedding Ollama
+# =========================================================
+
+EMBED_MODEL = "nomic-embed-text"
+
+# =========================================================
+# Gerar embeddings
+# =========================================================
+
+
+texts = []
 embeddings = []
 
-for sentence in sentences:
+print("Gerando embeddings...")
+
+for index, row in df.iterrows():
+
+    texto_rag = row["texto_rag"]
+
+    texts.append(texto_rag)
 
     response = ollama.embeddings(
-        model=OLLAMA_EMBED_MODEL,
-        prompt=sentence
+        model=EMBED_MODEL,
+        prompt=texto_rag
     )
 
     embeddings.append(
         response["embedding"]
     )
 
-print(f"Quantidade de embeddings: {len(embeddings)}")
-print(f"Dimensão do embedding: {len(embeddings[0])}")
+    if index % 50 == 0:
+        print(f"{index}/{LIMIT} embeddings gerados...")
 
-# ==========================================
-# Conectar no Milvus
-# ==========================================
+print("Embeddings finalizados!")
 
-connections.connect(
-    alias="default",
-    host="localhost",  # use "milvus" se estiver dentro do docker
-    port="19530"
-)
-
-COLLECTION_NAME = "sentences"
-
-# ==========================================
+# =========================================================
 # Criar collection se não existir
-# ==========================================
+# =========================================================
 
 if not utility.has_collection(COLLECTION_NAME):
 
     fields = [
+
         FieldSchema(
             name="id",
             dtype=DataType.INT64,
@@ -72,23 +104,51 @@ if not utility.has_collection(COLLECTION_NAME):
         ),
 
         FieldSchema(
-            name="text",
+            name="video_id",
+            dtype=DataType.VARCHAR,
+            max_length=100
+        ),
+
+        FieldSchema(
+            name="title",
             dtype=DataType.VARCHAR,
             max_length=1000
         ),
 
         FieldSchema(
+            name="channel_title",
+            dtype=DataType.VARCHAR,
+            max_length=500
+        ),
+
+        FieldSchema(
+            name="category_name",
+            dtype=DataType.VARCHAR,
+            max_length=200
+        ),
+
+        FieldSchema(
+            name="country",
+            dtype=DataType.VARCHAR,
+            max_length=50
+        ),
+
+        FieldSchema(
+            name="texto_rag",
+            dtype=DataType.VARCHAR,
+            max_length=20000
+        ),
+
+        FieldSchema(
             name="embedding",
             dtype=DataType.FLOAT_VECTOR,
-
-            # nomic-embed-text normalmente usa 768 dimensões
             dim=len(embeddings[0])
         )
     ]
 
     schema = CollectionSchema(
         fields=fields,
-        description="Sentence embeddings with Ollama"
+        description="Youtube trending videos embeddings"
     )
 
     collection = Collection(
@@ -96,14 +156,20 @@ if not utility.has_collection(COLLECTION_NAME):
         schema=schema
     )
 
-    # ==========================================
-    # Criar índice vetorial
-    # ==========================================
+    # =====================================================
+    # Índice vetorial
+    # =====================================================
 
     index_params = {
         "metric_type": "COSINE",
-        "index_type": "IVF_FLAT",
-        "params": {"nlist": 128}
+
+        # Melhor para semantic search
+        "index_type": "HNSW",
+
+        "params": {
+            "M": 16,
+            "efConstruction": 200
+        }
     }
 
     collection.create_index(
@@ -111,68 +177,46 @@ if not utility.has_collection(COLLECTION_NAME):
         index_params=index_params
     )
 
+    print("Collection criada!")
+
 else:
     collection = Collection(COLLECTION_NAME)
 
-# ==========================================
+# =========================================================
 # Inserir dados
-# ==========================================
+# =========================================================
 
 data = [
-    sentences,
+
+    # video_id
+    df["video_id"].astype(str).tolist(),
+
+    # title
+    df["title"].astype(str).tolist(),
+
+    # channel_title
+    df["channel_title"].astype(str).tolist(),
+
+    # category_name
+    df["category_name"].astype(str).tolist(),
+
+    # country
+    df["country"].astype(str).tolist(),
+
+    # texto_rag
+    texts,
+
+    # embeddings
     embeddings
 ]
 
-insert_result = collection.insert(data)
+print("Inserindo no Milvus...")
+
+result = collection.insert(data)
 
 collection.flush()
 
+print("===================================")
 print("Dados inseridos com sucesso!")
-print(insert_result.primary_keys)
-
-# ==========================================
-# Carregar collection
-# ==========================================
-
-collection.load()
-
-# ==========================================
-# Query
-# ==========================================
-
-query = "It is a beautiful sunny day"
-
-# ==========================================
-# Embedding da query usando Ollama
-# ==========================================
-
-query_embedding = ollama.embeddings(
-    model=OLLAMA_EMBED_MODEL,
-    prompt=query
-)["embedding"]
-
-# ==========================================
-# Busca vetorial
-# ==========================================
-
-results = collection.search(
-    data=[query_embedding],
-    anns_field="embedding",
-    param={
-        "metric_type": "COSINE",
-        "params": {"nprobe": 10}
-    },
-    limit=2,
-    output_fields=["text"]
-)
-
-# ==========================================
-# Mostrar resultados
-# ==========================================
-
-for hits in results:
-    for hit in hits:
-
-        print("Texto:", hit.entity.get("text"))
-        print("Distância:", hit.distance)
-        print("------")
+print(f"Quantidade inserida: {len(result.primary_keys)}")
+print("===================================")

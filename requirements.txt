@@ -6,3 +6,9 @@ google-api-python-client
 kaggle
 scikit-learn
 mlflow
+sentence-transformers
+pymilvus
+torch
+transformers
+numpy
+ollama

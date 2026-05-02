@@ -30,6 +30,24 @@ services:
     networks:
       - mlflow-network
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: rag_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    entrypoint: >
+      sh -c "
+      ollama serve &
+      sleep 10 &&
+      ollama pull nomic-embed-text &&
+      ollama pull llama3 &&
+      wait
+      "
+    networks:
+      - mlflow-network
+
   etcd:
     image: quay.io/coreos/etcd:v3.5.5
     container_name: milvus-etcd
@@ -89,6 +107,7 @@ services:
       - postgres
       - minio
       - milvus
+      - ollama
     ports:
       - "3000:3000"
     environment:
@@ -97,8 +116,14 @@ services:
       - AWS_SECRET_ACCESS_KEY=minio123
       - MLFLOW_TRACKING_URI=postgresql://mlflow:mlflow@postgres:5432/mlflow
       - BUCKET_NAME=mlflow
+
+      # Milvus
       - MILVUS_HOST=milvus
       - MILVUS_PORT=19530
+
+      # Ollama
+      - OLLAMA_HOST=http://ollama:11434
+
     networks:
       - mlflow-network
 
@@ -111,3 +136,4 @@ volumes:
   minio_data:
   etcd_data:
   milvus_data:
+  ollama_data:

@@ -1,0 +1,6 @@
+sentence-transformers
+pymilvus
+torch
+transformers
+numpy
+ollama

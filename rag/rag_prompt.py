@@ -1,25 +1,30 @@
-import ollama
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+from ollama import Client as OllamaClient
 
 from pymilvus import (
     connections,
     Collection
 )
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
+
 # =========================================================
 # CONFIG
 # =========================================================
 
-EMBED_MODEL = "nomic-embed-text"
-
-LLM_MODEL = "llama3"
-
-MILVUS_HOST = "localhost"
-
-MILVUS_PORT = "19530"
-
-COLLECTION_NAME = "youtube_trending"
-
+EMBED_MODEL     = os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text")
+LLM_MODEL       = os.getenv("OLLAMA_LLM_MODEL", "phi3:mini")
+OLLAMA_HOST     = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+MILVUS_HOST     = os.getenv("MILVUS_HOST", "localhost")
+MILVUS_PORT     = os.getenv("MILVUS_PORT", "19530")
+COLLECTION_NAME = os.getenv("MILVUS_COLLECTION", "youtube_trending")
 TOP_K = 5
+
+_ollama = OllamaClient(host=OLLAMA_HOST)
 
 # =========================================================
 # INTRO
@@ -147,7 +152,7 @@ while True:
 
     try:
 
-        response = ollama.embeddings(
+        response = _ollama.embeddings(
             model=EMBED_MODEL,
             prompt=rag_query
         )
@@ -395,7 +400,7 @@ while True:
 
     try:
 
-        stream = ollama.chat(
+        stream = _ollama.chat(
 
             model=LLM_MODEL,
 

@@ -7,12 +7,12 @@ services:
     container_name: mlflow-postgres
 
     environment:
-      - POSTGRES_USER=mlflow
-      - POSTGRES_PASSWORD=mlflow
-      - POSTGRES_DB=mlflow
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
 
     ports:
-      - "5433:5432"
+      - "${POSTGRES_PORT}:5432"
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -25,11 +25,11 @@ services:
     container_name: mlflow-minio
 
     environment:
-      - MINIO_ROOT_USER=minio
-      - MINIO_ROOT_PASSWORD=minio123
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY}
 
     ports:
-      - "9000:9000"
+      - "${MINIO_PORT}:9000"
       - "9001:9001"
 
     command: server /data --console-address ":9001"
@@ -61,8 +61,10 @@ services:
       sh -c "
       ollama serve &
       sleep 10 &&
-      ollama pull nomic-embed-text &&
-      ollama pull llama3 &&
+      ollama pull ${OLLAMA_EMBED_MODEL} &&
+      ollama pull ${OLLAMA_LLM_MODEL} &&
+      ollama pull ${OLLAMA_LLM_MODEL_2} &&
+      ollama pull ${OLLAMA_LLM_MODEL_3} &&
       wait
       "
 
@@ -88,6 +90,13 @@ services:
     volumes:
       - etcd_data:/etcd
 
+    healthcheck:
+      test: ["CMD", "etcdctl", "--endpoints=http://localhost:2379", "endpoint", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
     networks:
       - mlflow-network
 
@@ -100,16 +109,20 @@ services:
     environment:
       ETCD_ENDPOINTS: etcd:2379
       MINIO_ADDRESS: minio:9000
-      MINIO_ACCESS_KEY_ID: minio
-      MINIO_SECRET_ACCESS_KEY: minio123
+      MINIO_ACCESS_KEY_ID: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_ACCESS_KEY: ${MINIO_SECRET_KEY}
 
     ports:
-      - "19530:19530"
+      - "${MILVUS_PORT}:19530"
       - "9091:9091"
 
     depends_on:
-      - etcd
-      - minio
+      etcd:
+        condition: service_healthy
+      minio:
+        condition: service_started
+
+    restart: on-failure
 
     volumes:
       - milvus_data:/var/lib/milvus
@@ -143,25 +156,73 @@ services:
     depends_on:
       - postgres
       - minio
-      - milvus
-      - ollama
 
     ports:
       - "3000:3000"
 
     environment:
-      - MLFLOW_S3_ENDPOINT_URL=http://mlflow-minio:9000
-      - AWS_ACCESS_KEY_ID=minio
-      - AWS_SECRET_ACCESS_KEY=minio123
-      - MLFLOW_TRACKING_URI=postgresql://mlflow:mlflow@postgres:5432/mlflow
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+      - AWS_ACCESS_KEY_ID=${MINIO_ACCESS_KEY}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_SECRET_KEY}
+      - MLFLOW_TRACKING_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       - BUCKET_NAME=mlflow
 
-      # Milvus
+    networks:
+      - mlflow-network
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+
+    container_name: rag_api
+
+    restart: on-failure
+
+    depends_on:
+      - milvus
+      - ollama
+      - minio
+      - mlflow
+
+    ports:
+      - "8000:8000"
+
+    environment:
+      - MINIO_HOST=minio
+      - MINIO_PORT=9000
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
       - MILVUS_HOST=milvus
       - MILVUS_PORT=19530
-
-      # Ollama
+      - MILVUS_COLLECTION=${MILVUS_COLLECTION}
       - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_EMBED_MODEL=${OLLAMA_EMBED_MODEL}
+      - OLLAMA_LLM_MODEL=${OLLAMA_LLM_MODEL}
+      - OLLAMA_LLM_MODEL_2=${OLLAMA_LLM_MODEL_2}
+      - OLLAMA_LLM_MODEL_3=${OLLAMA_LLM_MODEL_3}
+      - MLFLOW_TRACKING_URI=http://mlflow:3000
+
+    networks:
+      - mlflow-network
+
+  interface:
+    build:
+      context: ./interface
+      dockerfile: Dockerfile
+
+    container_name: rag_interface
+
+    restart: on-failure
+
+    depends_on:
+      - api
+
+    ports:
+      - "7860:7860"
+
+    environment:
+      - API_URL=http://api:8000
 
     networks:
       - mlflow-network

@@ -4,7 +4,6 @@ from pathlib import Path
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
 
-# garante que o script encontre as credenciais independente do diretório de execução
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
@@ -13,8 +12,6 @@ API_KEY = os.getenv("YOUTUBE_API_KEY")
 def get_master_categories():
     youtube = build("youtube", "v3", developerKey=API_KEY)
     master_dict = {}
-    
-    # a api do youtube retorna as mesmas chaves globais independentemente da região consultada
     region = "US"
     
     try:
@@ -32,7 +29,6 @@ def get_master_categories():
 if __name__ == "__main__":
     categorias = get_master_categories()
     
-    # fixa o destino na raiz do projeto para garantir que o script de ingestão bronze localize o arquivo depois
     output_dir = BASE_DIR / "data" / "bronze"
     output_dir.mkdir(parents=True, exist_ok=True)
     

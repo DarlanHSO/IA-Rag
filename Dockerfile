@@ -6,7 +6,7 @@ RUN mkdir -p /mlflow
 WORKDIR /mlflow
 
 COPY start_mlflow.sh /mlflow/start_mlflow.sh
-RUN chmod +x /mlflow/start_mlflow.sh
+RUN sed -i 's/\r//' /mlflow/start_mlflow.sh && chmod +x /mlflow/start_mlflow.sh
 
 EXPOSE 3000
 

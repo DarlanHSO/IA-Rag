@@ -2,14 +2,23 @@ import os
 import json
 import tempfile
 import pandas as pd
+from pathlib import Path
 from minio import Minio
+from dotenv import load_dotenv
 
-# conexão com MinIO
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
+
+MINIO_HOST       = os.getenv("MINIO_HOST", "localhost")
+MINIO_PORT       = os.getenv("MINIO_PORT", "9000")
+MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "")
+MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "")
+
 client = Minio(
-    "localhost:9000",
-    access_key="minio",
-    secret_key="minio123",
-    secure=False
+    f"{MINIO_HOST}:{MINIO_PORT}",
+    access_key=MINIO_ACCESS_KEY,
+    secret_key=MINIO_SECRET_KEY,
+    secure=False,
 )
 
 print("iniciando transformação silver...")

@@ -1,14 +1,17 @@
+import os
 import math
 import time
+import tempfile
 import ollama
 import pandas as pd
 
 from pathlib import Path
-
 from concurrent.futures import (
     ThreadPoolExecutor,
     as_completed
 )
+from dotenv import load_dotenv
+from minio import Minio
 
 from pymilvus import (
     connections,
@@ -19,17 +22,24 @@ from pymilvus import (
     utility
 )
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
+
 # =========================================================
 # CONFIG
 # =========================================================
 
-BATCH_SIZE = 300
-
-THREADS = 3
-
-EMBED_MODEL = "nomic-embed-text"
-
-COLLECTION_NAME = "youtube_trending"
+BATCH_SIZE      = 300
+THREADS         = 3
+LIMIT           = 2000   # ajuste conforme o tempo disponível
+EMBED_MODEL     = os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text")
+COLLECTION_NAME = os.getenv("MILVUS_COLLECTION", "youtube_trending")
+MILVUS_HOST     = os.getenv("MILVUS_HOST", "localhost")
+MILVUS_PORT     = os.getenv("MILVUS_PORT", "19530")
+MINIO_HOST      = os.getenv("MINIO_HOST", "localhost")
+MINIO_PORT      = os.getenv("MINIO_PORT", "9000")
+MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "")
+MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "")
 
 # =========================================================
 # DATASET
@@ -39,23 +49,23 @@ print("\n===================================")
 print("INICIANDO PIPELINE")
 print("===================================\n")
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-DATASET_PATH = (
-    BASE_DIR /
-    "data" /
-    "gold" /
-    "trending_gold.parquet"
+_minio = Minio(
+    f"{MINIO_HOST}:{MINIO_PORT}",
+    access_key=MINIO_ACCESS_KEY,
+    secret_key=MINIO_SECRET_KEY,
+    secure=False,
 )
 
-print(f"Dataset localizado em:")
-print(DATASET_PATH)
+print("Baixando trending_gold.parquet do MinIO...")
 
-print("\nLendo parquet...")
+with tempfile.TemporaryDirectory() as tmp:
+    local_path = os.path.join(tmp, "trending_gold.parquet")
+    _minio.fget_object("gold", "trending_gold.parquet", local_path)
+    df = pd.read_parquet(local_path)
 
-df = pd.read_parquet(DATASET_PATH)
+print("Dataset baixado do MinIO!")
 
-df = df.fillna("")
+df = df.fillna("").head(LIMIT)
 
 print("Dataset carregado com sucesso!")
 
@@ -71,8 +81,8 @@ print("===================================\n")
 
 connections.connect(
     alias="default",
-    host="localhost",
-    port="19530"
+    host=MILVUS_HOST,
+    port=MILVUS_PORT,
 )
 
 print("Conectado no Milvus!")
@@ -85,9 +95,13 @@ print("\n===================================")
 print("VERIFICANDO COLLECTION")
 print("===================================\n")
 
+if utility.has_collection(COLLECTION_NAME):
+    print("Collection existente encontrada. Removendo para re-indexação limpa...")
+    utility.drop_collection(COLLECTION_NAME)
+    print("Collection removida!")
+
 if not utility.has_collection(COLLECTION_NAME):
 
-    print("Collection não existe.")
     print("Criando collection...")
 
     fields = [

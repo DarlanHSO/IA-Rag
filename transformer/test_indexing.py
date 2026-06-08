@@ -1,16 +1,25 @@
+import os
+from pathlib import Path
+
 import ollama
+from dotenv import load_dotenv
 
 from pymilvus import (
     connections,
     Collection
 )
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
+
 # =========================================================
 # CONFIG
 # =========================================================
 
-COLLECTION_NAME = "youtube_trending"
-EMBED_MODEL = "nomic-embed-text"
+COLLECTION_NAME = os.getenv("MILVUS_COLLECTION", "youtube_trending")
+EMBED_MODEL     = os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text")
+MILVUS_HOST     = os.getenv("MILVUS_HOST", "localhost")
+MILVUS_PORT     = os.getenv("MILVUS_PORT", "19530")
 
 # =========================================================
 # Conectar no Milvus
@@ -18,8 +27,8 @@ EMBED_MODEL = "nomic-embed-text"
 
 connections.connect(
     alias="default",
-    host="localhost",
-    port="19530"
+    host=MILVUS_HOST,
+    port=MILVUS_PORT,
 )
 
 collection = Collection(COLLECTION_NAME)

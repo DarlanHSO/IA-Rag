@@ -18,13 +18,9 @@ try:
     print("Bucket criado com sucesso!")
 except Exception as e:
     if "BucketAlreadyOwnedByYou" in str(e) or "BucketAlreadyExists" in str(e):
-        print("Bucket já existe.")
+        print("Bucket ja existe.")
     else:
         print(f"Erro ao criar bucket: {e}")
 PYEOF
 
-exec mlflow server \
-  --backend-store-uri "$MLFLOW_TRACKING_URI" \
-  --default-artifact-root "s3://$BUCKET_NAME/" \
-  --host 0.0.0.0 \
-  --port 3000
+exec mlflow server --backend-store-uri "$MLFLOW_TRACKING_URI" --default-artifact-root "s3://$BUCKET_NAME/" --host 0.0.0.0 --port 3000 --gunicorn-opts "--timeout 120 --workers 2"

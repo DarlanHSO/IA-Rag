@@ -1,7 +1,6 @@
 # Ignorar as chaves e segredos
 .env
 
-data/
 *.csv
 *.parquet
 
@@ -13,3 +12,4 @@ __pycache__/
 .venv/
 env/
 
+gi

@@ -1,6 +1,8 @@
+import os
 from pathlib import Path
 import pandas as pd
 import ollama
+from dotenv import load_dotenv
 
 from pymilvus import (
     connections,
@@ -11,14 +13,18 @@ from pymilvus import (
     utility
 )
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
+
+MILVUS_HOST     = os.getenv("MILVUS_HOST", "localhost")
+MILVUS_PORT     = os.getenv("MILVUS_PORT", "19530")
+COLLECTION_NAME = os.getenv("MILVUS_COLLECTION", "youtube_trending")
+EMBED_MODEL     = os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text")
+
 # =========================================================
 # PATHS
 # =========================================================
 
-# Pasta do script atual
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-# Dataset parquet
 DATASET_PATH = BASE_DIR / "data" / "gold" / "trending_gold.parquet"
 
 print(f"Dataset path: {DATASET_PATH}")
@@ -27,8 +33,7 @@ print(f"Dataset path: {DATASET_PATH}")
 # Ler dataset parquet
 # =========================================================
 
-LIMIT = 500;
-
+LIMIT = 500
 
 df = pd.read_parquet(DATASET_PATH)
 df = df.head(LIMIT)
@@ -42,21 +47,9 @@ print(f"Quantidade de linhas: {len(df)}")
 
 connections.connect(
     alias="default",
-    host="localhost",
-    port="19530"
+    host=MILVUS_HOST,
+    port=MILVUS_PORT,
 )
-
-# =========================================================
-# Collection
-# =========================================================
-
-COLLECTION_NAME = "youtube_trending"
-
-# =========================================================
-# Modelo embedding Ollama
-# =========================================================
-
-EMBED_MODEL = "nomic-embed-text"
 
 # =========================================================
 # Gerar embeddings
@@ -163,7 +156,6 @@ if not utility.has_collection(COLLECTION_NAME):
     index_params = {
         "metric_type": "COSINE",
 
-        # Melhor para semantic search
         "index_type": "HNSW",
 
         "params": {

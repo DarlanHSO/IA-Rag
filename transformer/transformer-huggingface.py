@@ -1,3 +1,7 @@
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
 from pymilvus import (
     connections,
@@ -8,13 +12,18 @@ from pymilvus import (
     utility
 )
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
+
+MILVUS_HOST = os.getenv("MILVUS_HOST", "localhost")
+MILVUS_PORT = os.getenv("MILVUS_PORT", "19530")
+
 
 model = SentenceTransformer(
     "sentence-transformers/all-MiniLM-L6-v2"
 )
 
 
-# textos, teremos que fornecer aqui os campos que importam do nosso dataset para ser feito o embedding
 sentences = [
     "The weather is lovely today.",
     "It's so sunny outside!",
@@ -39,8 +48,8 @@ print(embeddings.shape)
 
 connections.connect(
     alias="default",
-    host="localhost",  # use "milvus" se estiver dentro do docker
-    port="19530"
+    host=MILVUS_HOST,
+    port=MILVUS_PORT,
 )
 
 COLLECTION_NAME = "sentences"

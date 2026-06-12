@@ -1,5 +1,7 @@
 .PHONY: up down build restart logs ingest index train test pipeline help
 
+PIPELINE = docker compose --profile pipeline run --rm pipeline
+
 # ─── Infraestrutura ───────────────────────────────────────────────────────────
 
 up:
@@ -21,15 +23,17 @@ logs:
 # ─── Pipeline de dados ────────────────────────────────────────────────────────
 
 ingest:
-	python medallion_ingestion/01_bronze_ingestion.py
-	python medallion_ingestion/02_silver_transform.py
-	python medallion_ingestion/03_gold_business.py
+	$(PIPELINE) python medallion_ingestion/00_upload_docs.py
+	$(PIPELINE) python medallion_ingestion/01_bronze_ingestion.py
+	$(PIPELINE) python medallion_ingestion/02_silver_transform.py
+	$(PIPELINE) python medallion_ingestion/03_gold_business.py
 
 index:
-	python transformer/parallel_transformer.py
+	$(PIPELINE) python transformer/parallel_transformer.py
+	$(PIPELINE) python transformer/index_docs.py
 
 train:
-	python treino/modelo_treino.py
+	$(PIPELINE) sh -c "pip install boto3 -q && python treino/modelo_treino.py"
 
 # Roda tudo em sequência: ingestão → embeddings → treino ML
 pipeline: ingest index train
@@ -53,9 +57,9 @@ help:
 	@echo "    make logs      Acompanha logs em tempo real"
 	@echo ""
 	@echo "  Pipeline de dados:"
-	@echo "    make ingest    Bronze -> Silver -> Gold (roda local)"
-	@echo "    make index     Indexa embeddings no Milvus (roda local)"
-	@echo "    make train     Treina modelos ML e registra no MLflow (roda local)"
+	@echo "    make ingest    Bronze -> Silver -> Gold (container)"
+	@echo "    make index     Indexa embeddings no Milvus (container)"
+	@echo "    make train     Treina modelos ML e registra no MLflow (container)"
 	@echo "    make pipeline  ingest + index + train em sequência"
 	@echo ""
 	@echo "  Testes:"

@@ -1,9 +1,14 @@
 import os
+import pickle
 import tempfile
 import warnings
 
 from dotenv import load_dotenv
 load_dotenv()
+
+os.environ.setdefault("AWS_ACCESS_KEY_ID", os.getenv("MINIO_ACCESS_KEY", ""))
+os.environ.setdefault("AWS_SECRET_ACCESS_KEY", os.getenv("MINIO_SECRET_KEY", ""))
+os.environ.setdefault("MLFLOW_S3_ENDPOINT_URL", os.getenv("MLFLOW_S3_ENDPOINT_URL", "http://localhost:9000"))
 
 import pandas as pd
 from minio import Minio
@@ -102,7 +107,11 @@ def treino_avaliar_modelo(model_name, model, X_train, X_test, y_train, y_test):
         mlflow.log_metric("recall",    recall)
         mlflow.log_metric("f1_score",  f1)
 
-        mlflow.sklearn.log_model(model, artifact_path="model")
+        with tempfile.TemporaryDirectory() as tmp:
+            model_path = os.path.join(tmp, "model.pkl")
+            with open(model_path, "wb") as f:
+                pickle.dump(model, f)
+            mlflow.log_artifact(model_path, artifact_path="model")
 
         print(f"Accuracy : {accuracy:.4f}")
         print(f"Precision: {precision:.4f}")

@@ -55,14 +55,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="YouTube Viral RAG API",
-    description="RAG Enterprise platform for YouTube trending video analysis.",
+    description="Plataforma RAG Enterprise para análise de conteúdo viral no YouTube.",
     version="1.0.0",
     lifespan=lifespan,
 )
 
-# =============================================================
-# CONTRACT — Pydantic models
-# =============================================================
+# modelos de contrato
 
 class QueryRequest(BaseModel):
     question: str
@@ -159,9 +157,7 @@ class TopVideosResponse(BaseModel):
     videos: list[VideoInfo]
 
 
-# =============================================================
-# HELPERS
-# =============================================================
+# helpers
 
 def _minio() -> Minio:
     return Minio(
@@ -178,7 +174,40 @@ def _collection() -> Collection:
     return _col
 
 
+_PLATFORM_KW = {
+    "quem é você", "o que você é", "plataforma", "arquitetura",
+    "pré-processamento", "preprocessamento", "medallion", "camada bronze",
+    "camada silver", "camada gold", "modelos treinados", "como funciona",
+    "infraestrutura", "rag enterprise", "como você funciona",
+}
+
+_MLFLOW_KW = {"modelos treinados", "métricas", "acurácia", "accuracy", "f1", "precision", "recall", "experimento", "mlflow"}
+
+
+def _get_mlflow_context() -> str:
+    try:
+        client = MlflowClient()
+        runs = client.search_runs(
+            experiment_ids=[client.get_experiment_by_name("youtube_trending_classification").experiment_id]
+        )
+        lines = ["Resultados reais dos experimentos MLflow:"]
+        for r in runs:
+            m = r.data.metrics
+            lines.append(
+                f"- {r.info.run_name or r.data.params.get('model_name', r.info.run_id)}: "
+                f"accuracy={m.get('accuracy', 0):.4f}, "
+                f"precision={m.get('precision', 0):.4f}, "
+                f"recall={m.get('recall', 0):.4f}, "
+                f"f1_score={m.get('f1_score', 0):.4f}"
+            )
+        return "\n".join(lines)
+    except Exception:
+        return ""
+
+
 def _expand_query(question: str) -> str:
+    if any(kw in question.lower() for kw in _PLATFORM_KW):
+        return question
     return (
         f"Usuário busca ideias de conteúdo viral para YouTube.\n\n"
         f"Pedido: {question}\n\n"
@@ -201,19 +230,17 @@ def _build_context(docs: list[RetrievedDocument]) -> str:
     return "\n".join(lines)
 
 
-# =============================================================
-# ENDPOINTS
-# =============================================================
+# endpoints
 
 @app.get("/health", tags=["System"])
 def health():
-    """Liveness check."""
+    """Verifica se a API está no ar."""
     return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 
 @app.get("/metadata", response_model=MetadataResponse, tags=["System"])
 def metadata():
-    """Returns the current system configuration: models, vector store, data lake."""
+    """Retorna a configuração atual do sistema: modelos, banco vetorial e Data Lake."""
     try:
         buckets = [b.name for b in _minio().list_buckets()]
     except Exception:
@@ -240,7 +267,7 @@ def metadata():
 
 @app.get("/models", tags=["System"])
 def list_models():
-    """Lists all LLM models available in Ollama."""
+    """Lista todos os modelos LLM disponíveis no Ollama."""
     try:
         return {
             "available": AVAILABLE_MODELS,
@@ -255,9 +282,8 @@ def list_models():
 @app.post("/query", response_model=QueryResponse, tags=["RAG"])
 def query(request: QueryRequest):
     """
-    Main RAG endpoint. Embeds the question, retrieves the most similar
-    YouTube trending videos from Milvus, and generates an answer via the LLM.
-    Pass 'model' to override the default LLM.
+    Endpoint principal do RAG. Gera embedding da pergunta, busca os documentos mais similares
+    no Milvus e gera a resposta via LLM. Use o campo 'model' para escolher o LLM.
     """
     active_model = request.model or LLM_MODEL
 
@@ -272,7 +298,7 @@ def query(request: QueryRequest):
     timestamp   = datetime.now(timezone.utc).isoformat()
     expanded    = _expand_query(request.question)
 
-    # --- Embedding ---
+    # embedding
     t0 = time.time()
     try:
         embed_resp = _ollama.embeddings(model=EMBED_MODEL, prompt=expanded)
@@ -281,7 +307,8 @@ def query(request: QueryRequest):
         raise HTTPException(status_code=503, detail=f"Embedding error: {exc}")
     embedding_ms = (time.time() - t0) * 1000
 
-    # --- Vector search ---
+    # busca vetorial
+    is_platform = any(kw in request.question.lower() for kw in _PLATFORM_KW)
     t0 = time.time()
     try:
         col     = _collection()
@@ -290,6 +317,7 @@ def query(request: QueryRequest):
             anns_field="embedding",
             param={"metric_type": "COSINE", "params": {"ef": 128}},
             limit=request.top_k,
+            expr="category_name == 'Documentação'" if is_platform else None,
             output_fields=[
                 "video_id", "title", "channel_title",
                 "category_name", "country", "texto_rag",
@@ -299,7 +327,6 @@ def query(request: QueryRequest):
         raise HTTPException(status_code=503, detail=f"Milvus error: {exc}")
     search_ms = (time.time() - t0) * 1000
 
-    # --- Build retrieved documents ---
     retrieved: list[RetrievedDocument] = []
     for hits in results:
         for idx, hit in enumerate(hits):
@@ -319,20 +346,28 @@ def query(request: QueryRequest):
 
     context = _build_context(retrieved)
 
+    if any(kw in request.question.lower() for kw in _MLFLOW_KW):
+        mlflow_ctx = _get_mlflow_context()
+        if mlflow_ctx:
+            context = f"{context}\n\n{mlflow_ctx}" if context else mlflow_ctx
+
     rag_prompt = (
-        "Você é um especialista em YouTube viral, SEO e crescimento de canais.\n\n"
+        "Você é o assistente da plataforma YouTube Viral RAG Enterprise.\n\n"
         f"O usuário perguntou:\n{request.question}\n\n"
-        f"Vídeos similares encontrados:\n{context}\n\n"
+        f"Contexto recuperado do banco vetorial:\n{context}\n\n"
         "REGRAS:\n"
         "- Responda em português brasileiro\n"
-        "- Seja criativo e breve\n"
-        "- Analise padrões dos vídeos encontrados\n"
-        "- Foque em retenção e CTR\n"
-        "- Use listas quando adequado\n"
-        "- Se não encontrar uma boa resposta, diga isso claramente"
+        "- Seja direto e objetivo, máximo 100 palavras\n"
+        "- Responda APENAS com base no contexto fornecido, sem inventar informações\n"
+        "- Se o contexto contiver documentação (categoria 'Documentação'), extraia a resposta exata dela\n"
+        "- Para perguntas sobre pré-processamento, liste as etapas da camada Silver mencionadas no contexto\n"
+        "- Para perguntas sobre modelos, liste os modelos e métricas mencionados no contexto\n"
+        "- Para perguntas sobre identidade, descreva a plataforma como apresentada no contexto\n"
+        "- Se o contexto contiver vídeos do YouTube, analise padrões e faça sugestões de conteúdo\n"
+        "- Se não encontrar a informação no contexto, diga isso claramente"
     )
 
-    # --- LLM generation ---
+    # geração da resposta
     t0 = time.time()
     try:
         llm_resp = _ollama.chat(
@@ -340,11 +375,11 @@ def query(request: QueryRequest):
             messages=[
                 {
                     "role": "system",
-                    "content": "Você é um especialista em crescimento viral no YouTube.",
+                    "content": "Você é a plataforma YouTube Viral RAG Enterprise. Responda SOMENTE com informações presentes no contexto fornecido. NÃO invente, complete ou adicione nada que não esteja explicitamente no contexto.",
                 },
                 {"role": "user", "content": rag_prompt},
             ],
-            options={"num_ctx": 2048},
+            options={"num_ctx": 2048, "temperature": 0.1},
         )
         answer = llm_resp["message"]["content"]
     except Exception as exc:
@@ -445,7 +480,7 @@ def query_mlflow(request: MLflowQueryRequest):
                 {"role": "system", "content": "Você é um especialista em análise de experimentos de Machine Learning."},
                 {"role": "user", "content": prompt},
             ],
-            options={"num_ctx": 2048},
+            options={"num_ctx": 2048, "temperature": 0.1},
         )
         answer = llm_resp["message"]["content"]
     except Exception as exc:
@@ -463,7 +498,7 @@ def query_mlflow(request: MLflowQueryRequest):
 
 @app.get("/mlflow/experiments", response_model=list[MLflowExperimentInfo], tags=["MLflow"])
 def list_experiments():
-    """Lists all MLflow experiments and their runs with metrics."""
+    """Lista todos os experimentos e runs do MLflow com métricas."""
     try:
         client      = MlflowClient()
         experiments = client.search_experiments()
@@ -499,7 +534,7 @@ def list_experiments():
 def get_metrics(
     experiment_name: str = Query(..., description="MLflow experiment name"),
 ):
-    """Returns all runs and metrics for a given experiment name."""
+    """Retorna todos os runs e métricas de um experimento pelo nome."""
     try:
         client     = MlflowClient()
         experiment = client.get_experiment_by_name(experiment_name)
@@ -537,7 +572,7 @@ def get_metrics(
 def top_videos(
     limit: int = Query(default=10, ge=1, le=100, description="Number of videos to return"),
 ):
-    """Returns the top N YouTube videos by view count from the Gold layer."""
+    """Retorna os N vídeos do YouTube com mais views, lidos da camada Gold do Data Lake."""
     try:
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "trending_gold.parquet")

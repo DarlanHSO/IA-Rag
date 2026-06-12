@@ -227,6 +227,40 @@ services:
     networks:
       - mlflow-network
 
+  pipeline:
+    build:
+      context: .
+      dockerfile: pipeline/Dockerfile
+    container_name: rag_pipeline
+    profiles:
+      - pipeline
+    depends_on:
+      - minio
+      - milvus
+      - ollama
+      - mlflow
+    environment:
+      - MINIO_HOST=minio
+      - MINIO_PORT=9000
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MILVUS_HOST=milvus
+      - MILVUS_PORT=19530
+      - MILVUS_COLLECTION=${MILVUS_COLLECTION}
+      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_EMBED_MODEL=${OLLAMA_EMBED_MODEL}
+      - OLLAMA_LLM_MODEL=${OLLAMA_LLM_MODEL}
+      - OLLAMA_LLM_MODEL_2=${OLLAMA_LLM_MODEL_2}
+      - OLLAMA_LLM_MODEL_3=${OLLAMA_LLM_MODEL_3}
+      - MLFLOW_TRACKING_URI=http://mlflow:3000
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+      - AWS_ACCESS_KEY_ID=${MINIO_ACCESS_KEY}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_SECRET_KEY}
+      - KAGGLE_USERNAME=${KAGGLE_USERNAME}
+      - KAGGLE_KEY=${KAGGLE_KEY}
+    networks:
+      - mlflow-network
+
 networks:
   mlflow-network:
     driver: bridge

@@ -14,12 +14,10 @@ def _get(path: str, **kwargs):
 
 
 def _post(path: str, **kwargs):
-    return requests.post(f"{API_URL}{path}", timeout=180, **kwargs)
+    return requests.post(f"{API_URL}{path}", timeout=600, **kwargs)
 
 
-# ------------------------------------------------------------------
-# Helpers
-# ------------------------------------------------------------------
+# helpers
 
 def fetch_models() -> list[str]:
     try:
@@ -29,9 +27,7 @@ def fetch_models() -> list[str]:
         return ["phi3:mini"]
 
 
-# ------------------------------------------------------------------
-# Tab 1 — RAG Query
-# ------------------------------------------------------------------
+# rag query
 
 def query_rag(question: str, model: str, top_k: int):
     if not question.strip():
@@ -82,9 +78,7 @@ def refresh_models():
     return gr.Dropdown(choices=models, value=models[0] if models else None)
 
 
-# ------------------------------------------------------------------
-# Tab 2 — MLflow Experiments
-# ------------------------------------------------------------------
+# mlflow experiments
 
 def load_experiments():
     try:
@@ -112,25 +106,7 @@ def load_experiments():
         return pd.DataFrame({"erro": [str(exc)]})
 
 
-def query_mlflow(question: str, model: str):
-    if not question.strip():
-        return "Digite uma pergunta sobre os experimentos."
-    payload = {"question": question}
-    if model:
-        payload["model"] = model
-    try:
-        resp = _post("/query/mlflow", json=payload)
-        if resp.status_code != 200:
-            return f"Erro {resp.status_code}: {resp.json().get('detail', resp.text)}"
-        data = resp.json()
-        return f"{data['answer']}\n\n---\n_Modelo: {data['model']} | Runs analisados: {data['context_runs']} | LLM: {data['llm_ms']:.0f}ms_"
-    except Exception as exc:
-        return f"Erro de conexão: {exc}"
-
-
-# ------------------------------------------------------------------
-# Tab 3 — Top Vídeos
-# ------------------------------------------------------------------
+# top videos
 
 def load_top_videos(limit: int):
     try:
@@ -150,9 +126,7 @@ def load_top_videos(limit: int):
         return pd.DataFrame({"erro": [str(exc)]})
 
 
-# ------------------------------------------------------------------
-# Layout
-# ------------------------------------------------------------------
+# layout
 
 _initial_models = fetch_models()
 
@@ -163,13 +137,13 @@ with gr.Blocks(title="YouTube Viral RAG") as app:
         "Plataforma de análise de conteúdo viral no YouTube — UniFacens IA"
     )
 
-    # ---- Tab 1 -------------------------------------------------------
+    # tab rag query
     with gr.Tab("RAG Query"):
         with gr.Row():
             with gr.Column(scale=3):
                 question_box = gr.Textbox(
                     label="Pergunta",
-                    placeholder="Que tipo de vídeo está viral no Brasil?",
+
                     lines=3,
                 )
             with gr.Column(scale=1):
@@ -196,38 +170,14 @@ with gr.Blocks(title="YouTube Viral RAG") as app:
             outputs=[answer_box, docs_table, latency_box],
         )
 
-    # ---- Tab 2 -------------------------------------------------------
-    with gr.Tab("Perguntar sobre Experimentos"):
-        gr.Markdown("Pergunte sobre os experimentos de ML registrados no MLflow (Sprint 4).")
-        with gr.Row():
-            with gr.Column(scale=3):
-                mlflow_question = gr.Textbox(
-                    label="Pergunta",
-                    placeholder="Qual foi o melhor modelo? Qual o F1-score do RandomForest?",
-                    lines=2,
-                )
-            with gr.Column(scale=1):
-                mlflow_model_dd = gr.Dropdown(
-                    label="Modelo LLM",
-                    choices=_initial_models,
-                    value=_initial_models[0] if _initial_models else None,
-                )
-                btn_mlflow_query = gr.Button("Perguntar", variant="primary")
-        mlflow_answer = gr.Textbox(label="Resposta", lines=10, interactive=False)
-        btn_mlflow_query.click(
-            fn=query_mlflow,
-            inputs=[mlflow_question, mlflow_model_dd],
-            outputs=mlflow_answer,
-        )
-
-    # ---- Tab 3 -------------------------------------------------------
+    # tab mlflow
     with gr.Tab("MLflow — Tabela de Runs"):
         gr.Markdown("Visualize todos os experimentos e runs registrados.")
         btn_mlflow   = gr.Button("Carregar experimentos")
         mlflow_table = gr.Dataframe(label="Runs", interactive=False)
         btn_mlflow.click(fn=load_experiments, outputs=mlflow_table)
 
-    # ---- Tab 4 -------------------------------------------------------
+    # tab top videos
     with gr.Tab("Top Vídeos"):
         gr.Markdown("Top vídeos por views — camada Gold do Data Lake.")
         limit_slider = gr.Slider(

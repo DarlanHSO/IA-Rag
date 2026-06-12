@@ -1,102 +1,72 @@
-# IA-Rag
-Jira: 
+# YouTube Viral RAG Enterprise
 
-Link Dataset: https://www.kaggle.com/datasets/bsthere/youtube-trending-videos-stats-2026
+Plataforma de análise de conteúdo viral no YouTube usando RAG (Retrieval-Augmented Generation). Dataset com vídeos trending de 11 países via Kaggle.
 
-- César Augusto de Almeida - RA 222909 - Dev / CP901TIN2
-- Darlan Henrique de Souza Oliveira - RA 211926 - Scrum / CP901TIN2
-- Grazielly Almeida Rolle - RA 211871 - Dev / CP901TIN2
-- Gustavo Eiji Tamezava - RA 222226 - Scrum / CP901TIN2
-- Kevyn Feitosa Rocha - RA 223535 - Dev / CP901TIN2
-- Leonardo Almeida Proença - RA 222241 - Dev / CP901TIN2
-- Lucas Nascimento de Campos - RA 223324 - Tester / CP901TIN2
-- Natale Tagliaferro Neto - RA 212182 - Dev / CP901TIN2
-- Thiago Jun Honma RA - 222628 - Tester / CP901TIN2
-- Vinicius Matheus Nunes Araújo - RA 211973 - PO / CP901TIN2
-- Felipe Roberto de Souza Silva - RA 226752 - Dev / CP901TIN3
-
-# Product Backlog
-
-Camadas da arquitetura do projeto:
-
-- Camada de Dados
-- Camada de IA
-- Camada de Aplicação
-- Camada de MLOps
-- Infraestrutura
+**Disciplina:** Inteligência Artificial — UniFacens  
+**Professor:** Adson Nogueira Alves  
+**Dataset:** [youtube-trending-videos-stats-2026](https://www.kaggle.com/datasets/bsthere/youtube-trending-videos-stats-2026)
 
 ---
 
-# 🗂 Estrutura do Backlog
+## Stack
 
-Cada item do backlog possui:
-
-- **ID** — Identificador da tarefa  
-- **User Story** — Descrição da necessidade do usuário ou desenvolvedor  
-- **Camada** — Parte da arquitetura relacionada  
-- **Critério de Aceite** — Condição para considerar a tarefa concluída  
-
----
-
-# Epic 1 — Preparação e Organização de Dados
-
-**Objetivo:** estruturar e preparar o dataset de dados para utilização no sistema de IA.
-
-| ID | User Story | Camada | Critério de Aceite |
-|----|-----------|--------|--------------------|
-| PB01 | Como desenvolvedor, quero armazenar o dataset bruto de dados no Data Lake para centralizar os dados do projeto | Dados (MinIO - Bronze) | Dataset armazenado no bucket bronze |
-| PB02 | Como desenvolvedor, quero organizar e limpar os metadados das trends para melhorar a qualidade dos dados | Dados (Silver) | Metadados estruturados e inconsistências removidas |
-| PB03 | Como desenvolvedor, quero gerar uma versão tratada do dataset pronta para consumo pela IA | Dados (Gold) | Dataset padronizado e validado |
-| PB04 | Como desenvolvedor, quero registrar metadados e versões do dataset no banco para auditoria | Dados (PostgreSQL) | Dataset registrado com versão |
+| Serviço | Tecnologia | Porta |
+|---------|-----------|-------|
+| Data Lake | MinIO | 9000 / 9001 |
+| Banco vetorial | Milvus v2.4.0 | 19530 |
+| LLM / Embeddings | Ollama | 11434 |
+| Experimentos ML | MLflow 2.6.0 | 3000 |
+| API | FastAPI | 8000 |
+| Interface | Gradio | 7860 |
+| Banco relacional | PostgreSQL 13 | 5433 |
 
 ---
 
-# Epic 2 — Processamento de IA
+## Como rodar
 
-**Objetivo:** preparar e processar os dados utilizando técnicas de IA e pipeline RAG.
+```bash
+# Sobe os 9 containers
+make up
 
-| ID   | User Story                                                                 | Camada              | Critério de Aceite                                      |
-|------|---------------------------------------------------------------------------|---------------------|---------------------------------------------------------|
-| PB05 | Como desenvolvedor, quero dividir os dados tabulares em partes menores para melhorar o processamento | IA (Chunking)       | Pipeline gera chunks de registros corretamente           |
-| PB06 | Como desenvolvedor, quero gerar embeddings a partir dos dados tabulares para permitir busca semântica | IA (Embedding)      | Embeddings gerados com sucesso a partir dos registros    |
-| PB07 | Como desenvolvedor, quero armazenar embeddings no banco vetorial para consultas eficientes | Dados (Milvus)      | Vetores indexados corretamente no banco                 |
-| PB08 | Como usuário, quero que o sistema recupere registros similares a partir de uma consulta | IA (Recuperação)    | Sistema retorna resultados relevantes com base nos dados |
-|
+# Ingesta dados + indexa embeddings + treina modelos
+make pipeline
 
----
+# Testa todos os endpoints
+make test
+```
 
-# Epic 3 — API e Aplicação
-
-**Objetivo:** disponibilizar os serviços de análise de dados tabulares (trends do YouTube) através de uma API e interface de usuário.
-
-| ID   | User Story                                                                 | Camada              | Critério de Aceite                                                  |
-|------|---------------------------------------------------------------------------|---------------------|---------------------------------------------------------------------|
-| PB09 | Como desenvolvedor, quero criar endpoints para consulta de dados via API  | Aplicação (FastAPI) | Endpoint `/search` retorna registros relevantes do dataset          |
-| PB10 | Como usuário, quero consultar dados através de uma interface simples      | Aplicação (Gradio)  | Interface funcional permitindo buscas e filtros                     |
-| PB11 | Como usuário, quero visualizar os resultados da análise dos dados         | Aplicação           | Resultados exibidos corretamente (ex: título, canal, métricas, etc) |
+Interface disponível em `http://localhost:7860`  
+API + docs em `http://localhost:8000/docs`  
+MLflow em `http://localhost:3000`
 
 ---
 
-# Epic 4 — Monitoramento e Experimentos
+## Arquitetura Medallion
 
-**Objetivo:** acompanhar desempenho, experimentos e evolução dos modelos.
-
-| ID | User Story | Camada | Critério de Aceite |
-|----|-----------|--------|--------------------|
-| PB12 | Como desenvolvedor, quero registrar experimentos do modelo para análise futura | MLOps (MLflow) | Experimentos registrados |
-| PB13 | Como desenvolvedor, quero versionar os modelos utilizados no sistema | MLOps | Versões de modelo registradas |
-| PB14 | Como desenvolvedor, quero registrar métricas de avaliação do sistema | MLOps | Métricas armazenadas |
+- **Bronze** — CSVs originais do Kaggle, imutável
+- **Silver** — dados limpos e normalizados em Parquet
+- **Gold** — campo `texto_rag` pronto para embeddings e treino ML
 
 ---
 
-# Epic 5 — Infraestrutura
+## Modelos treinados
 
-**Objetivo:** garantir execução, reprodutibilidade e documentação do sistema.
-
-| ID | User Story | Camada | Critério de Aceite |
-|----|-----------|--------|--------------------|
-| PB15 | Como desenvolvedor, quero criar containers para os serviços do sistema | Infraestrutura (Docker) | Containers funcionando |
-| PB16 | Como desenvolvedor, quero orquestrar os serviços utilizando Docker Compose | Infraestrutura | Serviços executando corretamente |
-| PB17 | Como desenvolvedor, quero documentar a arquitetura do sistema | Infraestrutura | README técnico completo |
+LogisticRegression, DecisionTreeClassifier e RandomForestClassifier para classificação binária de vídeos virais (views > 1M). Experimentos registrados no MLflow.
 
 ---
+
+## Time
+
+| Nome | RA | Turma |
+|------|----|-------|
+| César Augusto de Almeida | 222909 | CP901TIN2 |
+| Darlan Henrique de Souza Oliveira | 211926 | CP901TIN2 |
+| Grazielly Almeida Rolle | 211871 | CP901TIN2 |
+| Gustavo Eiji Tamezava | 222226 | CP901TIN2 |
+| Kevyn Feitosa Rocha | 223535 | CP901TIN2 |
+| Leonardo Almeida Proença | 222241 | CP901TIN2 |
+| Lucas Nascimento de Campos | 223324 | CP901TIN2 |
+| Natale Tagliaferro Neto | 212182 | CP901TIN2 |
+| Thiago Jun Honma | 222628 | CP901TIN2 |
+| Vinicius Matheus Nunes Araújo | 211973 | CP901TIN2 |
+| Felipe Roberto de Souza Silva | 226752 | CP901TIN3 |

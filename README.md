@@ -6,6 +6,20 @@ Plataforma RAG para análise de vídeos virais no YouTube. Dataset com trending 
 **Professor:** Adson Nogueira Alves  
 **Dataset:** [youtube-trending-videos-stats-2026](https://www.kaggle.com/datasets/bsthere/youtube-trending-videos-stats-2026)
 
+| Nome | RA | Função | Turma |
+|------|----|--------|-------|
+| César Augusto de Almeida | 222909 | Dev | CP901TIN2 |
+| Darlan Henrique de Souza Oliveira | 211926 | Scrum Master | CP901TIN2 |
+| Grazielly Almeida Rolle | 211871 | Dev | CP901TIN2 |
+| Gustavo Eiji Tamezava | 222226 | Scrum Master | CP901TIN2 |
+| Kevyn Feitosa Rocha | 223535 | Dev | CP901TIN2 |
+| Leonardo Almeida Proença | 222241 | Dev | CP901TIN2 |
+| Lucas Nascimento de Campos | 223324 | Tester | CP901TIN2 |
+| Natale Tagliaferro Neto | 212182 | Dev | CP901TIN2 |
+| Thiago Jun Honma | 222628 | Tester | CP901TIN2 |
+| Vinicius Matheus Nunes Araújo | 211973 | PO | CP901TIN2 |
+| Felipe Roberto de Souza Silva | 226752 | Dev | CP901TIN3 |
+
 ---
 
 ## Serviços
@@ -106,18 +120,3 @@ LogisticRegression, DecisionTreeClassifier e RandomForestClassifier treinados pa
 
 ---
 
-## Time
-
-| Nome | RA | Função | Turma |
-|------|----|--------|-------|
-| César Augusto de Almeida | 222909 | Dev | CP901TIN2 |
-| Darlan Henrique de Souza Oliveira | 211926 | Scrum Master | CP901TIN2 |
-| Grazielly Almeida Rolle | 211871 | Dev | CP901TIN2 |
-| Gustavo Eiji Tamezava | 222226 | Scrum Master | CP901TIN2 |
-| Kevyn Feitosa Rocha | 223535 | Dev | CP901TIN2 |
-| Leonardo Almeida Proença | 222241 | Dev | CP901TIN2 |
-| Lucas Nascimento de Campos | 223324 | Tester | CP901TIN2 |
-| Natale Tagliaferro Neto | 212182 | Dev | CP901TIN2 |
-| Thiago Jun Honma | 222628 | Tester | CP901TIN2 |
-| Vinicius Matheus Nunes Araújo | 211973 | PO | CP901TIN2 |
-| Felipe Roberto de Souza Silva | 226752 | Dev | CP901TIN3 |

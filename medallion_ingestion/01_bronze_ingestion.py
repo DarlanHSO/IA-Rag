@@ -4,6 +4,7 @@ from pathlib import Path
 from minio import Minio
 from kaggle.api.kaggle_api_extended import KaggleApi
 from dotenv import load_dotenv
+from db_metadata import log_ingestion
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
@@ -53,4 +54,6 @@ if categories_path.exists():
 else:
     print(f"aviso: dicionário não encontrado em {categories_path}. execute get_categorias.py antes.")
 
+arquivos_bronze = sum(1 for _ in client.list_objects("bronze"))
+log_ingestion("bronze", arquivos_bronze, source=DATASET_ID)
 print("ingestão bronze finalizada.")

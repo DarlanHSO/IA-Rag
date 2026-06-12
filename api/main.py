@@ -603,3 +603,43 @@ def top_videos(
         )
     except Exception as exc:
         raise HTTPException(status_code=503, detail=f"Data error: {exc}")
+
+
+import sqlalchemy as sa
+
+_pg_engine = None
+
+
+def _pg():
+    global _pg_engine
+    if _pg_engine is None:
+        url = (
+            f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}"
+            f"@{os.getenv('POSTGRES_HOST', 'postgres')}:{os.getenv('POSTGRES_PORT', '5432')}"
+            f"/{os.getenv('POSTGRES_DB')}"
+        )
+        _pg_engine = sa.create_engine(url)
+    return _pg_engine
+
+
+@app.get("/dataset/versions", tags=["Data"])
+def dataset_versions():
+    """Retorna o histórico de ingestões registradas no PostgreSQL por camada."""
+    try:
+        with _pg().connect() as conn:
+            rows = conn.execute(sa.text(
+                "SELECT layer, source, record_count, ingested_at, status "
+                "FROM dataset_versions ORDER BY ingested_at DESC LIMIT 50"
+            )).fetchall()
+        return [
+            {
+                "layer":        r.layer,
+                "source":       r.source,
+                "record_count": r.record_count,
+                "ingested_at":  r.ingested_at.isoformat(),
+                "status":       r.status,
+            }
+            for r in rows
+        ]
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"PostgreSQL error: {exc}")

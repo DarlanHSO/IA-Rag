@@ -5,6 +5,7 @@ import pandas as pd
 from pathlib import Path
 from minio import Minio
 from dotenv import load_dotenv
+from db_metadata import log_ingestion
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
@@ -121,4 +122,5 @@ with tempfile.TemporaryDirectory() as temp_dir:
 
     client.fput_object("silver", "trending_silver.parquet", silver_path)
 
+log_ingestion("silver", len(df_silver), source="trending_silver.parquet")
 print("transformação silver finalizada.")
